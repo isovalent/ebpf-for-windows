@@ -709,26 +709,6 @@ ebpf_program_load_bytes(
 #endif
 
 /**
- * @brief Get eBPF program type for the specified bpf program type.
- *
- * @param[in] program_type Bpf program type.
- *
- * @returns Pointer to eBPF program type, or NULL if not found.
- */
-_Ret_maybenull_ const ebpf_program_type_t*
-ebpf_get_ebpf_program_type(bpf_prog_type_t bpf_program_type) noexcept;
-
-/**
- * @brief Get eBPF attach type for the specified bpf attach type.
- *
- * @param[in] program_type Bpf attach type.
- *
- * @returns Pointer to eBPF attach type, or NULL if not found.
- */
-_Ret_maybenull_ const ebpf_attach_type_t*
-get_ebpf_attach_type(bpf_attach_type_t bpf_attach_type) noexcept;
-
-/**
  * @brief Get bpf program type for the specified eBPF program type.
  *
  * @param[in] program_type eBPF program type GUID.

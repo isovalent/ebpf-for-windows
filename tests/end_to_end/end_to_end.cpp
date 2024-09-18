@@ -2855,22 +2855,22 @@ TEST_CASE("ebpf_get_program_type_name invalid types", "[end-to-end]")
     REQUIRE(name2 == nullptr);
 }
 
-TEST_CASE("get_ebpf_attach_type", "[end_to_end]")
+TEST_CASE("ebpf_get_ebpf_attach_type", "[end_to_end]")
 {
     _test_helper_end_to_end test_helper;
     test_helper.initialize();
 
     // First test a valid input.
-    const ebpf_attach_type_t* attach_type = get_ebpf_attach_type(BPF_ATTACH_TYPE_BIND);
+    const ebpf_attach_type_t* attach_type = ebpf_get_ebpf_attach_type(BPF_ATTACH_TYPE_BIND);
     REQUIRE(attach_type != nullptr);
 
     REQUIRE(IsEqualGUID(*attach_type, EBPF_ATTACH_TYPE_BIND) != 0);
 
     // Try with BPF_ATTACH_TYPE_UNSPEC.
-    REQUIRE(get_ebpf_attach_type(BPF_ATTACH_TYPE_UNSPEC) == nullptr);
+    REQUIRE(ebpf_get_ebpf_attach_type(BPF_ATTACH_TYPE_UNSPEC) == nullptr);
 
     // Try with invalid bpf attach type.
-    REQUIRE(get_ebpf_attach_type((bpf_attach_type_t)BPF_ATTACH_TYPE_INVALID) == nullptr);
+    REQUIRE(ebpf_get_ebpf_attach_type((bpf_attach_type_t)BPF_ATTACH_TYPE_INVALID) == nullptr);
 }
 
 TEST_CASE("get_bpf_program_type", "[end_to_end]")
