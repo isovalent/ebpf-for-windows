@@ -68,6 +68,23 @@ template <typename T> class ExtensibleStruct
     }
 };
 
+static bool
+is_valid_obj_name(const char* p, const char** name)
+{
+    switch (strnlen(p, BPF_OBJ_NAME_LEN)) {
+    case 0:
+        *name = nullptr;
+        return true;
+
+    case BPF_OBJ_NAME_LEN:
+        return false;
+
+    default:
+        *name = p;
+        return true;
+    }
+}
+
 int
 bpf(int cmd, union bpf_attr* p, unsigned int size)
 {
@@ -92,8 +109,19 @@ bpf(int cmd, union bpf_attr* p, unsigned int size)
         }
         case BPF_MAP_CREATE: {
             ExtensibleStruct<sys_bpf_map_create_attr_t> attr((void*)p, (size_t)size);
-            struct bpf_map_create_opts opts = {.map_flags = attr->map_flags};
-            return bpf_map_create(attr->map_type, nullptr, attr->key_size, attr->value_size, attr->max_entries, &opts);
+            struct bpf_map_create_opts opts = {
+                .inner_map_fd = attr->inner_map_fd,
+                .map_flags = attr->map_flags,
+                .numa_node = attr->numa_node,
+                .map_ifindex = attr->map_ifindex,
+            };
+            const char* name = nullptr;
+
+            if (!is_valid_obj_name(attr->map_name, &name)) {
+                return -EINVAL;
+            }
+
+            return bpf_map_create(attr->map_type, name, attr->key_size, attr->value_size, attr->max_entries, &opts);
         }
         case BPF_MAP_DELETE_ELEM: {
             ExtensibleStruct<sys_bpf_map_delete_attr_t> attr((void*)p, (size_t)size);
@@ -182,10 +210,25 @@ bpf(int cmd, union bpf_attr* p, unsigned int size)
             }
 
             struct bpf_prog_load_opts opts = {
-                .kern_version = attr->kern_version, .log_size = attr->log_size, .log_buf = (char*)attr->log_buf};
+                .prog_flags = attr->prog_flags,
+                .kern_version = attr->kern_version,
+                .log_size = attr->log_size,
+                .log_buf = (char*)attr->log_buf,
+            };
+            const char* name = nullptr;
+
+            if (!is_valid_obj_name(attr->prog_name, &name)) {
+                return -EINVAL;
+            }
+
+            if (name == nullptr) {
+                // Disable using sha256 as object name.
+                name = "";
+            }
+
             return bpf_prog_load(
                 attr->prog_type,
-                nullptr,
+                name,
                 (const char*)attr->license,
                 (const struct bpf_insn*)attr->insns,
                 attr->insn_cnt,

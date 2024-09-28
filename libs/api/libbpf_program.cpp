@@ -21,6 +21,10 @@ bpf_load_program_xattr(const struct bpf_load_program_attr* load_attr, char* log_
         return libbpf_err(-EINVAL);
     }
 
+    if (load_attr->prog_flags != 0) {
+        return libbpf_err(-EINVAL);
+    }
+
     const ebpf_program_type_t* program_type = ebpf_get_ebpf_program_type(load_attr->prog_type);
     if (program_type == nullptr) {
         return libbpf_err(-EINVAL);

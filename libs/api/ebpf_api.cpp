@@ -316,7 +316,7 @@ ebpf_map_create(
 
     ebpf_assert(map_fd);
 
-    if (opts && opts->map_flags != 0) {
+    if (opts && (opts->map_flags != 0 || opts->numa_node != 0 || opts->map_ifindex != 0)) {
         result = EBPF_INVALID_ARGUMENT;
         goto Exit;
     }

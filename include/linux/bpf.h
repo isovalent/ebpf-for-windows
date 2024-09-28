@@ -53,6 +53,8 @@ enum bpf_stats_type
 // Names do not have to match, but try to keep them the same as much as possible.
 // In case of conflicts prefix them with "sys_" or "SYS_".
 
+#define SYS_BPF_OBJ_NAME_LEN 16U
+
 enum bpf_cmd_id
 {
     BPF_MAP_CREATE,
@@ -87,11 +89,15 @@ enum bpf_cmd_id
 /// Attributes used by BPF_MAP_CREATE.
 typedef struct
 {
-    enum bpf_map_type map_type; ///< Type of map to create.
-    uint32_t key_size;          ///< Size in bytes of keys.
-    uint32_t value_size;        ///< Size in bytes of values.
-    uint32_t max_entries;       ///< Maximum number of entries in the map.
-    uint32_t map_flags;         ///< Flags (currently 0).
+    enum bpf_map_type map_type;          ///< Type of map to create.
+    uint32_t key_size;                   ///< Size in bytes of keys.
+    uint32_t value_size;                 ///< Size in bytes of values.
+    uint32_t max_entries;                ///< Maximum number of entries in the map.
+    uint32_t map_flags;                  ///< Flags (currently 0).
+    uint32_t inner_map_fd;               ///< File descriptor of inner map.
+    uint32_t numa_node;                  ///< Numa node.
+    char map_name[SYS_BPF_OBJ_NAME_LEN]; ///< Map name.
+    uint32_t map_ifindex;                ///< Map ifindex.
 } sys_bpf_map_create_attr_t;
 
 typedef struct
@@ -135,6 +141,7 @@ typedef struct
     uint64_t log_buf;      ///< Pointer to a buffer in which log info can be written.
     uint32_t kern_version; ///< Kernel version (currently ignored on Windows).
     uint32_t prog_flags;   ///< Not supported.
+    char prog_name[SYS_BPF_OBJ_NAME_LEN]; ///< Program name.
 } sys_bpf_prog_load_attr_t;
 
 typedef struct
