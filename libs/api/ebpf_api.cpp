@@ -1142,7 +1142,10 @@ ebpf_map_get_next_key(fd_t map_fd, _In_opt_ const void* previous_key, _Out_ void
     uint32_t type;
     ebpf_handle_t map_handle = ebpf_handle_invalid;
 
-    ebpf_assert(next_key);
+    if (next_key == NULL) {
+        result = EBPF_INVALID_ARGUMENT;
+        goto Exit;
+    }
 
     map_handle = _get_handle_from_file_descriptor(map_fd);
     if (map_handle == ebpf_handle_invalid) {
