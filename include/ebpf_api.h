@@ -641,6 +641,26 @@ extern "C"
     _Ret_maybenull_ const ebpf_attach_type_t*
     ebpf_get_ebpf_attach_type(bpf_attach_type_t bpf_attach_type) EBPF_NO_EXCEPT;
 
+    /**
+     * @brief Get bpf program type for the specified eBPF program type.
+     *
+     * @param[in] program_type eBPF program type GUID.
+     *
+     * @returns Bpf program type, or BPF_PROG_TYPE_UNSPEC if not found.
+     */
+    bpf_prog_type_t
+    ebpf_get_bpf_program_type(_In_ const ebpf_program_type_t* program_type) EBPF_NO_EXCEPT;
+
+    /**
+     * @brief Get bpf attach type for the specified eBPF attach type.
+     *
+     * @param[in] attach_type eBPF attach type GUID.
+     *
+     * @returns Bpf attach type, or BPF_ATTACH_TYPE_UNSPEC if not found.
+     */
+    bpf_attach_type_t
+    ebpf_get_bpf_attach_type(_In_ const ebpf_attach_type_t* ebpf_attach_type) EBPF_NO_EXCEPT;
+
 #ifdef __cplusplus
 }
 #endif

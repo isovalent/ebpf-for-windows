@@ -330,7 +330,7 @@ ebpf_get_ebpf_attach_type(bpf_attach_type_t bpf_attach_type) noexcept
 }
 
 bpf_prog_type_t
-get_bpf_program_type(_In_ const ebpf_program_type_t* ebpf_program_type) noexcept
+ebpf_get_bpf_program_type(_In_ const ebpf_program_type_t* ebpf_program_type) noexcept
 {
     _load_ebpf_provider_data();
 
@@ -344,7 +344,7 @@ get_bpf_program_type(_In_ const ebpf_program_type_t* ebpf_program_type) noexcept
 }
 
 bpf_attach_type_t
-get_bpf_attach_type(_In_ const ebpf_attach_type_t* ebpf_attach_type) noexcept
+ebpf_get_bpf_attach_type(_In_ const ebpf_attach_type_t* ebpf_attach_type) noexcept
 {
     _load_ebpf_provider_data();
 
