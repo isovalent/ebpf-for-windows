@@ -191,6 +191,40 @@ typedef struct
     uint64_t info; ///< Pointer to memory in which to write the info obtained.
 } sys_bpf_obj_info_attr_t;
 
+typedef struct
+{
+    ebpf_map_type_t type;            ///< Type of map.
+    ebpf_id_t id;                    ///< Map ID.
+    uint32_t key_size;               ///< Size in bytes of a map key.
+    uint32_t value_size;             ///< Size in bytes of a map value.
+    uint32_t max_entries;            ///< Maximum number of entries allowed in the map.
+    uint32_t map_flags;              ///< Map flags.
+    char name[SYS_BPF_OBJ_NAME_LEN]; ///< Null-terminated map name.
+} sys_bpf_map_info_t;
+
+typedef struct
+{
+    enum bpf_prog_type type;         ///< Program type.
+    ebpf_id_t id;                    ///< Program ID.
+    char tag[8];                     ///< Program tag.
+    uint32_t jited_prog_len;         ///< Not supported.
+    uint32_t xlated_prog_len;        ///< Not supported.
+    uint64_t jited_prog_insns;       ///< Not supported.
+    uint64_t xlated_prog_insns;      ///< Not supported.
+    uint64_t load_time;              ///< Not supported.
+    uint32_t created_by_uid;         ///< Not supported.
+    uint32_t nr_map_ids;             ///< Number of maps associated with this program.
+    uint64_t map_ids;                ///< Pointer to caller-allocated array to fill map IDs into.
+    char name[SYS_BPF_OBJ_NAME_LEN]; ///< Null-terminated program name.
+} sys_bpf_prog_info_t;
+
+typedef struct
+{
+    enum bpf_link_type type; ///< Link type.
+    ebpf_id_t id;            ///< Link ID.
+    ebpf_id_t prog_id;       ///< Program ID.
+} sys_bpf_link_info_t;
+
 /// Attributes used by BPF_LINK_DETACH.
 typedef struct
 {

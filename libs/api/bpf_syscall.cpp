@@ -1,7 +1,10 @@
 // Copyright (c) eBPF for Windows contributors
 // SPDX-License-Identifier: MIT
+#include "api_internal.h"
 #include "bpf.h"
 #include "libbpf.h"
+#include "libbpf_internal.h"
+#include "linux/bpf.h"
 
 #include <windows.h>
 #include <WinError.h>
@@ -71,17 +74,104 @@ template <typename T> class ExtensibleStruct
 static bool
 is_valid_obj_name(const char* p, const char** name)
 {
-    switch (strnlen(p, BPF_OBJ_NAME_LEN)) {
+    switch (strnlen(p, SYS_BPF_OBJ_NAME_LEN)) {
     case 0:
         *name = nullptr;
         return true;
 
-    case BPF_OBJ_NAME_LEN:
+    case SYS_BPF_OBJ_NAME_LEN:
         return false;
 
     default:
         *name = p;
         return true;
+    }
+}
+
+static void
+convert_to_map_info(struct bpf_map_info* bpf, const sys_bpf_map_info_t* sys);
+static void
+convert_to_sys_map_info(sys_bpf_map_info_t* sys, const struct bpf_map_info* bpf);
+static void
+convert_to_prog_info(struct bpf_prog_info* bpf, const sys_bpf_prog_info_t* sys);
+static void
+convert_to_sys_prog_info(sys_bpf_prog_info_t* sys, const struct bpf_prog_info* bpf);
+static void
+convert_to_link_info(struct bpf_link_info* bpf, const sys_bpf_link_info_t* sys);
+static void
+convert_to_sys_link_info(sys_bpf_link_info_t* sys, const struct bpf_link_info* bpf);
+
+static int
+obj_get_info_by_fd(sys_bpf_obj_info_attr_t* attr)
+{
+    union
+    {
+        struct bpf_map_info map;
+        struct bpf_prog_info prog;
+        struct bpf_link_info link;
+    } tmp = {};
+    uint32_t info_size = sizeof(tmp);
+    ebpf_object_type_t type;
+
+    ebpf_result_t result = ebpf_object_get_info_by_fd((fd_t)attr->bpf_fd, &tmp, &info_size, &type);
+    if (result != EBPF_SUCCESS) {
+        return libbpf_result_err(result);
+    }
+
+    switch (type) {
+    case EBPF_OBJECT_MAP: {
+        ExtensibleStruct<sys_bpf_map_info_t> info((void*)attr->info, (size_t)attr->info_len);
+
+        convert_to_map_info(&tmp.map, &info);
+
+        info_size = sizeof(tmp.map);
+        result = ebpf_object_get_info_by_fd((fd_t)attr->bpf_fd, &tmp.map, &info_size, NULL);
+        if (result != EBPF_SUCCESS) {
+            return libbpf_result_err(result);
+        }
+
+        convert_to_sys_map_info(&info, &tmp.map);
+        return 0;
+    }
+
+    case EBPF_OBJECT_PROGRAM: {
+        ExtensibleStruct<sys_bpf_prog_info_t> info((void*)attr->info, (size_t)attr->info_len);
+        sys_bpf_prog_info_t* sys = &info;
+
+        if (sys->jited_prog_len != 0 || sys->xlated_prog_len != 0 || sys->jited_prog_insns != 0 ||
+            sys->xlated_prog_insns != 0) {
+            return -EINVAL;
+        }
+
+        convert_to_prog_info(&tmp.prog, &info);
+
+        info_size = sizeof(tmp.prog);
+        result = ebpf_object_get_info_by_fd((fd_t)attr->bpf_fd, &tmp.prog, &info_size, NULL);
+        if (result != EBPF_SUCCESS) {
+            return libbpf_result_err(result);
+        }
+
+        convert_to_sys_prog_info(&info, &tmp.prog);
+        return 0;
+    }
+
+    case EBPF_OBJECT_LINK: {
+        ExtensibleStruct<sys_bpf_link_info_t> info((void*)attr->info, (size_t)attr->info_len);
+
+        convert_to_link_info(&tmp.link, &info);
+
+        info_size = sizeof(tmp.link);
+        result = ebpf_object_get_info_by_fd((fd_t)attr->bpf_fd, &tmp.link, &info_size, NULL);
+        if (result != EBPF_SUCCESS) {
+            return libbpf_result_err(result);
+        }
+
+        convert_to_sys_link_info(&info, &tmp.link);
+        return 0;
+    }
+
+    default:
+        return -EINVAL;
     }
 }
 
@@ -178,7 +268,7 @@ bpf(int cmd, union bpf_attr* p, unsigned int size)
         }
         case BPF_OBJ_GET_INFO_BY_FD: {
             ExtensibleStruct<sys_bpf_obj_info_attr_t> attr((void*)p, (size_t)size);
-            return bpf_obj_get_info_by_fd(attr->bpf_fd, (void*)attr->info, &attr->info_len);
+            return obj_get_info_by_fd(&attr);
         }
         case BPF_OBJ_PIN: {
             ExtensibleStruct<sys_bpf_obj_pin_attr_t> attr((void*)p, (size_t)size);
@@ -274,4 +364,85 @@ bpf(int cmd, union bpf_attr* p, unsigned int size)
     } catch (...) {
         return -EINVAL;
     }
+}
+
+#define BPF_TO_SYS(field) sys->field = bpf->field
+#define BPF_TO_SYS_STR(field) strncpy_s(sys->field, sizeof(sys->field), bpf->field, _TRUNCATE)
+#define BPF_TO_SYS_MEM(field) memcpy(sys->field, bpf->field, sizeof(sys->field))
+#define SYS_TO_BPF(field) bpf->field = sys->field
+#define SYS_TO_BPF_STR(field) strncpy_s(bpf->field, sys->field, sizeof(bpf->field))
+#define SYS_TO_BPF_MEM(field) memcpy(bpf->field, sys->field, sizeof(bpf->field))
+
+static void
+convert_to_map_info(struct bpf_map_info* bpf, const sys_bpf_map_info_t* sys)
+{
+    SYS_TO_BPF(type);
+    SYS_TO_BPF(id);
+    SYS_TO_BPF(key_size);
+    SYS_TO_BPF(value_size);
+    SYS_TO_BPF(max_entries);
+    SYS_TO_BPF(map_flags);
+    SYS_TO_BPF_STR(name);
+}
+
+static void
+convert_to_sys_map_info(sys_bpf_map_info_t* sys, const struct bpf_map_info* bpf)
+{
+    BPF_TO_SYS(type);
+    BPF_TO_SYS(id);
+    BPF_TO_SYS(key_size);
+    BPF_TO_SYS(value_size);
+    BPF_TO_SYS(max_entries);
+    BPF_TO_SYS(map_flags);
+    BPF_TO_SYS_STR(name);
+}
+
+static void
+convert_to_prog_info(struct bpf_prog_info* bpf, const sys_bpf_prog_info_t* sys)
+{
+    SYS_TO_BPF(type);
+    SYS_TO_BPF(id);
+    // SYS_TO_BPF_MEM(tag);
+    // SYS_TO_BPF(jited_prog_len);
+    // SYS_TO_BPF(xlated_prog_len);
+    // SYS_TO_BPF(jited_prog_insns);
+    // SYS_TO_BPF(xlated_prog_insns);
+    // SYS_TO_BPF(load_time);
+    // SYS_TO_BPF(created_by_uid);
+    SYS_TO_BPF(nr_map_ids);
+    SYS_TO_BPF(map_ids);
+    SYS_TO_BPF_STR(name);
+}
+
+static void
+convert_to_sys_prog_info(sys_bpf_prog_info_t* sys, const struct bpf_prog_info* bpf)
+{
+    BPF_TO_SYS(type);
+    BPF_TO_SYS(id);
+    // BPF_TO_SYS_MEM(tag);
+    // BPF_TO_SYS(jited_prog_len);
+    // BPF_TO_SYS(xlated_prog_len);
+    // BPF_TO_SYS(jited_prog_insns);
+    // BPF_TO_SYS(xlated_prog_insns);
+    // BPF_TO_SYS(load_time);
+    // BPF_TO_SYS(created_by_uid);
+    BPF_TO_SYS(nr_map_ids);
+    BPF_TO_SYS(map_ids);
+    BPF_TO_SYS_STR(name);
+}
+
+static void
+convert_to_link_info(struct bpf_link_info* bpf, const sys_bpf_link_info_t* sys)
+{
+    SYS_TO_BPF(type);
+    SYS_TO_BPF(id);
+    SYS_TO_BPF(prog_id);
+}
+
+static void
+convert_to_sys_link_info(sys_bpf_link_info_t* sys, const struct bpf_link_info* bpf)
+{
+    BPF_TO_SYS(type);
+    BPF_TO_SYS(id);
+    BPF_TO_SYS(prog_id);
 }
