@@ -2105,6 +2105,13 @@ _ebpf_core_protocol_get_object_info(
         return result;
     }
 
+    reply->type = object->type;
+
+    if (input_buffer_size == 0) {
+        EBPF_OBJECT_RELEASE_REFERENCE(object);
+        return EBPF_SUCCESS;
+    }
+
     // List of object types is fixed at compile time.
     switch (object->type) {
     case EBPF_OBJECT_LINK:
@@ -2123,7 +2130,6 @@ _ebpf_core_protocol_get_object_info(
     }
 
     if (result == EBPF_SUCCESS) {
-        reply->type = object->type;
         reply->header.length = FIELD_OFFSET(ebpf_operation_get_object_info_reply_t, info) + info_size;
     }
     EBPF_OBJECT_RELEASE_REFERENCE(object);
