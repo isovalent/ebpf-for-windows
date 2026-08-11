@@ -99,13 +99,13 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc  # v2.15.1
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
       - id: skip_check
         if: inputs.perform_skip_check == true
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf  # v5.3.1
+        uses: fkirc/skip-duplicate-actions@b974a9395958c231af965b70070979a577efa578 # v5.3.2
         with:
           cancel_others: 'false'
           paths_ignore: '["**.md", "**/docs/**"]'
@@ -119,7 +119,7 @@ jobs:
           powershell.exe "echo 'VCINSTALLDIR=%VCINSTALLDIR%' | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append"
           powershell.exe "echo $env:PROCESSOR_ARCHITECTURE"
 
-      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.skip_check.outputs.should_skip != 'true'
         with:
           repository: ${{inputs.repository}}
@@ -137,19 +137,19 @@ jobs:
 
       - name: Initialize CodeQL
         if: inputs.build_codeql == true && steps.skip_check.outputs.should_skip != 'true'
-        uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98
+        uses: github/codeql-action/init@c16c0f3f2812ec4bb3750a5ed64873fe2ce0fbef # codeql-bundle-v2.26.3
         with:
           languages: 'cpp'
 
       - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
         with:
           msbuild-architecture: x64
 
       - name: Cache LLVM 18.1.8 installer
         if: steps.skip_check.outputs.should_skip != 'true'
         id: cache-llvm
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}\llvm-installer
           key: ${{ runner.os }}-llvm-18.1.8-installer
@@ -214,7 +214,7 @@ jobs:
       - name: Cache nuget packages
         if: steps.skip_check.outputs.should_skip != 'true'
         continue-on-error: true
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
           cache-name: cache-nuget-modules
         with:
@@ -224,7 +224,7 @@ jobs:
       - name: Cache verifier project
         # The hash is based on the HEAD of the ebpf-verifier submodule, the Directory.Build.props file, and the build variant.
         if: steps.skip_check.outputs.should_skip != 'true'
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
           cache-name: cache-verifier-project
         with:
@@ -291,7 +291,7 @@ jobs:
 
       - name: Upload 1ES artifacts
         if: steps.skip_check.outputs.should_skip != 'true' && (inputs.build_artifact == 'Build-x64' && matrix.configurations == 'Release')
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: 1ES artifacts
           path: 1es/**
@@ -311,7 +311,7 @@ jobs:
 
       - name: Upload Build Output
         if: always() && (steps.skip_check.outputs.should_skip != 'true') && (inputs.build_artifact != 'none')
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{inputs.build_artifact}}-${{matrix.configurations}}
           path: ${{github.workspace}}/build-${{ matrix.configurations }}.zip
@@ -319,7 +319,7 @@ jobs:
 
       - name: Upload the MSI package
         if: inputs.build_msi == true
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ebpf-for-windows - MSI installer (${{inputs.build_artifact}}_${{env.BUILD_CONFIGURATION}})
           path: ${{github.workspace}}/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/ebpf-for-windows.msi
@@ -331,7 +331,7 @@ jobs:
 
       - name: Upload the NuGet package
         if: inputs.build_nuget == true && (matrix.configurations == 'Release' || matrix.configurations == 'NativeOnlyRelease') && steps.skip_check.outputs.should_skip != 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ebpf-for-windows - NuGet package (${{inputs.build_artifact}}_${{env.BUILD_CONFIGURATION}})
           path: ${{github.workspace}}/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/eBPF-for-Windows.*.nupkg
@@ -350,14 +350,14 @@ jobs:
 
       - name: Upload the NuGet Redist package
         if: inputs.build_nuget == true && (matrix.configurations == 'Release' || matrix.configurations == 'NativeOnlyRelease') && steps.skip_check.outputs.should_skip != 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ebpf-for-windows - NuGet Redist package (${{inputs.build_artifact}}_${{env.BUILD_CONFIGURATION}})
           path: ${{github.workspace}}/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/eBPF-for-Windows-Redist.*.nupkg
 
       - name: Upload binlog
         if: (success() || failure()) && steps.skip_check.outputs.should_skip != 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-binlog-${{env.BUILD_ARTIFACT_NAME}}-${{env.BUILD_PLATFORM}}-${{env.BUILD_CONFIGURATION}}
           path: out.binlog
@@ -365,7 +365,7 @@ jobs:
       - name: Check for crash dumps
         # Check for crash dumps even if the workflow failed.
         if: (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true')
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         id: check_dumps
         with:
           files: c:/dumps/${{env.BUILD_PLATFORM}}/${{env.BUILD_CONFIGURATION}}/*.dmp
@@ -373,7 +373,7 @@ jobs:
       - name: Upload any crash dumps
         # Upload crash dumps even if the workflow failed.
         if: (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true') && (steps.check_dumps.outputs.files_exists == 'true')
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         id: upload_crash_dumps
         with:
           name: Crash-Dumps-${{env.NAME}}-${{env.BUILD_PLATFORM}}-${{env.BUILD_CONFIGURATION}}
@@ -382,4 +382,4 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: inputs.build_codeql == true && steps.skip_check.outputs.should_skip != 'true'
-        uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98
+        uses: github/codeql-action/analyze@c16c0f3f2812ec4bb3750a5ed64873fe2ce0fbef # codeql-bundle-v2.26.3

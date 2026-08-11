@@ -22,11 +22,11 @@ jobs:
     runs-on: Windows-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc  # v2.15.1
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Check for updates to the Windows Driver Kit
         id: check_wdk
@@ -41,7 +41,7 @@ jobs:
           $wdkVersion = (Get-Content -Path .\wdk.props | Select-String -Pattern "<WDKVersion>" | ForEach-Object { $_ -replace "<WDKVersion>", "" -replace "</WDKVersion>", "" }).trim()
           "wdk_version=$wdkVersion" >> $env:GITHUB_OUTPUT
 
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         if: steps.check_wdk.outputs.wdk_version != steps.check_repo_wdk.outputs.wdk_version
         env:
           TITLE: 'Update the Windows Driver Kit'

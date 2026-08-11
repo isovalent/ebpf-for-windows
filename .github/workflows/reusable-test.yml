@@ -92,7 +92,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc  # v2.15.1
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           egress-policy: audit
 
@@ -101,13 +101,13 @@ jobs:
           Get-WmiObject -Class Win32_Processor | Select-Object -Property Name, NumberOfCores, NumberOfLogicalProcessors
 
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf  # v5.3.1
+        uses: fkirc/skip-duplicate-actions@b974a9395958c231af965b70070979a577efa578 # v5.3.2
         with:
           cancel_others: 'false'
           paths_ignore: '["**.md", "**/docs/**"]'
 
       # Checking out the branch is needed to gather correct code coverage data.
-      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         # Only check out source code if code coverage is being gathered.
         if: (inputs.code_coverage == true) && (steps.skip_check.outputs.should_skip != 'true')
         with:
@@ -115,7 +115,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_branch }}
 
       # Perform shallow checkout for self-hosted runner.
-      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: (contains(inputs.environment, 'ebpf_cicd') || contains(inputs.environment, '1ES')) && (steps.skip_check.outputs.should_skip != 'true')
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
@@ -123,14 +123,14 @@ jobs:
       # Check if .github/workflows/reusable-test.yml exists locally.
       - name: Check for .github/workflows/reusable-test.yml
         # Check for test logs even if the workflow failed.
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         if: (inputs.gather_dumps == true) && (steps.skip_check.outputs.should_skip != 'true')
         id: check_reusable_test_locally
         with:
           files: .github/workflows/reusable-test.yml
 
       # Check out just this file if code hasn't been checked out yet.
-      - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: (steps.check_reusable_test_locally.outputs.files_exists != 'true') && (steps.skip_check.outputs.should_skip != 'true')
         with:
           sparse-checkout: |
@@ -149,7 +149,7 @@ jobs:
         # Add cache entry for any choco packages that are installed.
         # The cache key is based on the hash of this file so if any choco packages are added or removed, the cache will be invalidated.
         if: (inputs.gather_dumps == true) && (steps.skip_check.outputs.should_skip != 'true')
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         env:
           cache-name: cache-choco-packages
         with:
@@ -198,7 +198,7 @@ jobs:
 
       - name: Download build artifact
         if: (steps.skip_check.outputs.should_skip != 'true') && success()
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         id: download_artifact
         with:
           name: ${{inputs.build_artifact}}-${{matrix.configurations}}
@@ -368,7 +368,7 @@ jobs:
 
       - name: Check for CodeCoverage
         if: steps.skip_check.outputs.should_skip != 'true'
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         id: check_coverage
         with:
           files: ebpf_for_windows.xml
@@ -454,7 +454,7 @@ jobs:
       - name: Check for crash dumps
         # Check for crash dumps even if the workflow failed.
         if: always() && (steps.skip_check.outputs.should_skip != 'true')
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         id: check_dumps
         with:
           files: ${{env.DUMP_PATH}}/*.dmp
@@ -462,7 +462,7 @@ jobs:
       - name: Upload any crash dumps
         # Upload crash dumps even if the workflow failed.
         if: always() && (steps.skip_check.outputs.should_skip != 'true') && (steps.check_dumps.outputs.files_exists == 'true') && (inputs.gather_dumps == true)
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         id: upload_crash_dumps
         with:
           name: Crash-Dumps-${{env.NAME}}-${{env.BUILD_PLATFORM}}-${{env.BUILD_CONFIGURATION}}
@@ -471,7 +471,7 @@ jobs:
 
       - name: Check for TestLogs
         # Check for test logs even if the workflow failed.
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         if: always() && (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true')
         id: check_logs
         with:
@@ -481,7 +481,7 @@ jobs:
         # Upload test logs even if the workflow failed.
         if: (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true') && (steps.check_logs.outputs.files_exists == 'true')
         id: upload_logs
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         continue-on-error: true
         with:
           name: Test-Logs-${{env.NAME}}-${{env.BUILD_PLATFORM}}-${{env.BUILD_CONFIGURATION}}
@@ -491,7 +491,7 @@ jobs:
       - name: Check for generated artifacts
         # Check for artifacts even if the workflow failed.
         if: (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true')
-        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         id: check_artifacts
         with:
           files: ${{github.workspace}}\${{env.BUILD_PLATFORM}}\${{env.BUILD_CONFIGURATION}}\Artifacts\*
@@ -501,7 +501,7 @@ jobs:
         if: (success() || failure()) && (steps.skip_check.outputs.should_skip != 'true') && (steps.check_artifacts.outputs.files_exists == 'true')
         id: upload_artifacts
         continue-on-error: true
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Artifacts-${{env.NAME}}-${{env.BUILD_PLATFORM}}-${{env.BUILD_CONFIGURATION}}
           path: ${{github.workspace}}\${{env.BUILD_PLATFORM}}\${{env.BUILD_CONFIGURATION}}\Artifacts
@@ -517,7 +517,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc  # v2.15.1
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -525,12 +525,12 @@ jobs:
             api.github.com:443
 
       - id: skip_check
-        uses: fkirc/skip-duplicate-actions@f75f66ce1886f00957d99748a42c724f4330bdcf  # v5.3.1
+        uses: fkirc/skip-duplicate-actions@b974a9395958c231af965b70070979a577efa578 # v5.3.2
         with:
           cancel_others: 'false'
           paths_ignore: '["**.md", "**/docs/**"]'
 
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         if: (github.event_name == 'schedule') || (github.event_name == 'push' || github.event_name == 'merge_group') && (steps.skip_check.outputs.should_skip != 'true')
         env:
           TITLE: Workflow failed - ${{inputs.name}}
